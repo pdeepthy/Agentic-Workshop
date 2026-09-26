@@ -16,7 +16,7 @@ The workshop's triage agent (Epic 2) and its eval (Epic 3) both need two things 
 
 - **CAP-1**
   - **intent:** A triage decision has one strict shape, and anything that doesn't fit it is refused.
-  - **success:** A JSON object with `category` in {billing, bug, access, performance, how-to}, `priority` in {P1, P2, P3, P4}, `route` in {billing-team, bug-team, access-team, performance-team, how-to-team} and a one-sentence `rationale` is accepted. A missing field, a value outside its set, or a wrong type is rejected with an error that names the offending field.
+  - **success:** A JSON object with `category` in {billing, bug, access, performance, how-to}, `priority` in {P1, P2, P3, P4}, `route` in {billing-team, bug-team, access-team, performance-team, how-to-team} and a `rationale` of exactly one sentence is accepted, provided the route is the one `TRIAGE_POLICY.md` pairs with the category (billing → billing-team, bug → bug-team, access → access-team, performance → performance-team, how-to → how-to-team). A missing field, a value outside its set, a wrong type, a route that doesn't match its category, or a rationale that is empty or longer than one sentence is rejected with an error that names the offending field.
 
 - **CAP-2**
   - **intent:** One command puts the seed data into a local SQLite database.
@@ -39,10 +39,8 @@ The workshop's triage agent (Epic 2) and its eval (Epic 3) both need two things 
 
 ## Success signal
 
-After `uv run python load_seed.py` (run twice), `get_ticket("T-1042")` from `mcp/triage_server.py` returns T-1042 with customer C-77. A decision such as `{"category": "billing", "priority": "P2", "route": "billing-team", "rationale": "..."}` validates, while the same object with `priority: "P5"` is rejected with a clear error.
+After `uv run python load_seed.py` (run twice), `get_ticket("T-1042")` from `mcp/triage_server.py` returns T-1042 with customer C-77. A decision such as `{"category": "billing", "priority": "P2", "route": "billing-team", "rationale": "..."}` validates, while the same object with `priority: "P5"`, with `route: "bug-team"`, or with a two-sentence rationale is rejected with a clear error.
 
 ## Open Questions
 
-- Should the schema reject a route that doesn't match its category under `TRIAGE_POLICY.md` (e.g. `billing` with `bug-team`), or check only each field's own set?
-- How strict is "one-sentence rationale": any non-empty string, or rejected when it has more than one sentence?
 - Should `open_tickets` be stored as an INTEGER (the Enterprise rule compares it to 3) or as the CSV's text?
