@@ -1,20 +1,42 @@
 """Triage one support ticket with the agent and print the decision.
 
-Usage: uv run python run_agent.py T-1042
+Run `uv run python run_agent.py --help` for usage.
 """
 
+import argparse
 import asyncio
 import json
-import sys
 
 import mlflow
 from dotenv import load_dotenv
 
+EPILOG = """\
+output:
+  JSON with category, priority (P1-P4), route and a one-sentence rationale.
+
+environment (read from .env):
+  GEMINI_API_KEY   key for the default provider (Gemini)
+  MODEL            model name (default: gemini-3.8-flash)
+  PROVIDER         set to "groq" to use Groq instead (needs GROQ_API_KEY)
+
+tracing:
+  Every run is logged to MLflow (sqlite:///mlflow.db, experiment "triage-agent").
+
+examples:
+  uv run python run_agent.py T-1042
+  PROVIDER=groq uv run python run_agent.py T-1099
+"""
+
 
 def main() -> None:
-    if len(sys.argv) != 2:
-        raise SystemExit("Usage: uv run python run_agent.py <ticket_id>")
-    ticket_id = sys.argv[1]
+    parser = argparse.ArgumentParser(
+        prog="uv run python run_agent.py",
+        description="Triage one support ticket with the agent and print the decision as JSON.",
+        epilog=EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("ticket_id", help="ticket to triage, e.g. T-1042 (from seed/tickets.csv)")
+    ticket_id = parser.parse_args().ticket_id
 
     load_dotenv()
     mlflow.set_tracking_uri("sqlite:///mlflow.db")
